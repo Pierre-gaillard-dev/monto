@@ -1,0 +1,68 @@
+version: "3.8"
+
+services:
+  # --- Backend (API) ---
+  api:
+    image: php:8.5.3-zts-alpine3.22
+    container_name: monto_api
+    restart: unless-stopped
+    working_dir: /var/www
+    volumes:
+      - ./api:/var/www
+      - video_storage:/var/www/storage/app/public/videos
+    networks:
+      - monto_net
+    depends_on:
+      - db
+
+  nginx:
+    image: nginx:alpine
+    container_name: monto_nginx
+    restart: unless-stopped
+    ports:
+      - "8000:80"
+    volumes:
+      - ./api:/var/www
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d
+    networks:
+      - monto_net
+    depends_on:
+      - api
+
+  db:
+    image: postgres:16-alpine
+    container_name: monto_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE}
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - monto_net
+
+  # --- Frontend (Web) ---
+  web:
+    image: node:24-alpine
+    container_name: monto_web
+    working_dir: /app
+    volumes:
+      - ./web:/app
+    ports:
+      - "5173:5173"
+    command: sh -c "npm install && npm run dev -- --host"
+    networks:
+      - monto_net
+
+volumes:
+  db_data:
+    driver: local
+  video_storage:
+    driver: local
+
+networks:
+  monto_net:
+    driver: bridge
