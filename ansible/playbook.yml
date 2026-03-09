@@ -44,7 +44,7 @@
     - name: Build and start Docker containers
       community.docker.docker_compose_v2:
         project_src: "{{ app_dir }}"
-        build: yes
+        build: always
         state: present
         remove_orphans: yes
 
