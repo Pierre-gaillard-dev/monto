@@ -1,0 +1,35 @@
+name: Deploy via Ansible
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Ansible
+        run: pip install ansible requests docker
+
+      - name: Add SSH key
+        uses: webfactory/ssh-agent@v0.8.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: Create inventory file
+        run: |
+          echo "[production]" > ansible/inventory.ini
+          echo "${{ secrets.SERVER_IP }} ansible_user=${{ secrets.SERVER_USER }} ansible_ssh_extra_args='-o StrictHostKeyChecking=no'" >> ansible/inventory.ini
+
+      - name: Run Ansible Playbook
+        env:
+          ENV_FILE_CONTENT: ${{ secrets.ENV_FILE }}
+        run: ansible-playbook ansible/playbook.yml

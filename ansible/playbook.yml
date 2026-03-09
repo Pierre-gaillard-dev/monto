@@ -1,0 +1,54 @@
+---
+- name: Deploy Monto
+  hosts: production
+  become: yes  # Run as sudo
+  vars:
+    app_dir: /var/www/monto
+    repo_url: git@github.com:Pierre-gaillard-dev/monto.git
+    
+  tasks:
+    - name: Ensure app directory exists
+      file:
+        path: "{{ app_dir }}"
+        state: directory
+        owner: "{{ ansible_user }}"
+        group: "{{ ansible_user }}"
+        mode: '0755'
+
+    - name: Pull latest code from git
+      git:
+        repo: "{{ repo_url }}"
+        dest: "{{ app_dir }}"
+        version: main
+        force: yes
+        accept_hostkey: yes
+        key_file: "/home/{{ ansible_user }}/.ssh/id_rsa" # Ensure deploy key exists on server
+
+    - name: Install Python Docker SDK (required for docker_compose module)
+      pip:
+        name: 
+          - docker
+          - requests
+        state: present
+
+
+    - name: Copy .env file (from GitHub Secrets or local template)
+      copy:
+        content: "{{ lookup('env', 'ENV_FILE_CONTENT') }}"
+        dest: "{{ app_dir }}/.env"
+      when: lookup('env', 'ENV_FILE_CONTENT') | length > 0
+
+    - name: Build and start Docker containers
+      community.docker.docker_compose:
+        project_src: "{{ app_dir }}"
+        build: yes
+        state: present
+        remove_orphans: yes
+
+    - name: Run database migrations
+      command: docker compose exec -T api php artisan migrate --force
+      register: migrate_output
+      changed_when: "'Nothing to migrate' not in migrate_output.stdout"
+
+    - name: Optimize Laravel
+      command: docker compose exec -T api php artisan optimize:clear
