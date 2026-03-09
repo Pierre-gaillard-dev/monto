@@ -32,4 +32,4 @@ jobs:
       - name: Run Ansible Playbook
         env:
           ENV_FILE_CONTENT: ${{ secrets.ENV_FILE }}
-        run: ansible-playbook ansible/playbook.yml
+        run: ansible-playbook ansible/playbook.yml -i ansible/inventory.ini

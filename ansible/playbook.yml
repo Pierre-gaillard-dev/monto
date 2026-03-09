@@ -39,7 +39,7 @@
       when: lookup('env', 'ENV_FILE_CONTENT') | length > 0
 
     - name: Build and start Docker containers
-      community.docker.docker_compose:
+      community.docker.docker_compose_v2:
         project_src: "{{ app_dir }}"
         build: yes
         state: present
