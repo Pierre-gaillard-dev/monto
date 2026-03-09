@@ -50,8 +50,12 @@
 
     - name: Run database migrations
       command: docker compose exec -T api php artisan migrate --force
+      args:
+        chdir: "{{ app_dir }}"
       register: migrate_output
       changed_when: "'Nothing to migrate' not in migrate_output.stdout"
 
     - name: Optimize Laravel
       command: docker compose exec -T api php artisan optimize:clear
+      args:
+        chdir: "{{ app_dir }}"
