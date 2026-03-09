@@ -22,7 +22,7 @@
         version: main
         force: yes
         accept_hostkey: yes
-        key_file: "{{ ansible_env.HOME }}/.ssh/id_rsa" # Works for both root (/root) and regular users (/home/user)
+        key_file: "/root/.ssh/id_rsa"
 
     - name: Install Python Docker SDK (required for docker_compose module)
       pip:
