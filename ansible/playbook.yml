@@ -24,12 +24,21 @@
         accept_hostkey: yes
         key_file: "/root/.ssh/id_rsa"
 
+    - name: Install pip and packaging system dependencies
+      apt:
+        name:
+          - python3-pip
+          - python3-packaging
+        state: present
+        update_cache: yes
+
     - name: Install Python Docker SDK (required for docker_compose module)
       pip:
-        name: 
+        name:
           - docker
           - requests
         state: present
+        executable: pip3
 
 
     - name: Copy .env file (from GitHub Secrets or local template)
